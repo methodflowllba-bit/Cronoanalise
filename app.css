@@ -17,3 +17,7 @@
 .yam-head{background:#222678;color:white}.yam-head h2,.yam-head p{color:white}.yam-head button{color:#142c3d}.yam-chart{width:100%;min-width:850px;display:block;touch-action:none}.yam-operations{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}.yam-operations article{width:220px;border:1px solid #d3dbe7;border-top:4px solid #377bdd;padding:15px;border-radius:8px;cursor:grab}.yam-legend{display:flex;gap:25px;padding:10px}.yam-choice{display:flex;gap:12px;margin:10px}.yam-choice input{width:auto}.yam-task-row{display:flex;align-items:center;gap:15px;padding:10px;border-bottom:1px solid #ddd}.yam-task-row span{flex:1}.yam-task-row select{max-width:200px}
 
 .yam-tooltip{position:fixed;z-index:9999;background:#111827;color:white;padding:12px 14px;max-width:290px;border-radius:12px;box-shadow:0 5px 20px #0003;font-size:13px;white-space:pre-line;pointer-events:none}.yam-tooltip[hidden]{display:none}
+
+#yam-picker .yam-choice{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;padding:12px;border:1px solid #dce3ed;border-radius:8px;cursor:pointer}#yam-picker .yam-choice input{flex:0 0 18px;width:18px;height:18px;margin:0}#yam-picker .yam-choice span{display:block}#yam-picker .yam-choice small{display:block;margin-top:5px;color:#728397}#yam-picker .yam-choice:has(input:checked){background:#e8f2ff;border-color:#0875db}
+
+.yam-delivery{margin:18px 0;padding:18px;border:1px solid #95cbb1;background:#eaf8f0;border-radius:8px}.yam-delivery strong{font-size:20px}
