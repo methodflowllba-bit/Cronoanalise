@@ -1,0 +1,77 @@
+'use strict';
+const ITVideo=(()=>{
+const LIMIT=50*1024*1024;
+const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text)n.textContent=text;if(cls)n.className=cls;return n};
+const button=(text,fn)=>{const n=el('button',text);n.type='button';n.onclick=fn;return n};
+function field(parent,title,key,type,choices){const label=el('label',title),n=el(choices?'select':'input');n.name=key;if(!choices)n.type=type;else choices.forEach(t=>n.append(el('option',t)));label.append(n);parent.append(label);return n}
+function account(){if(!window.MFUserDataKey)throw Error('Entre novamente para acessar os vídeos.');return window.MFUserDataKey}
+function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('method-flow-it-videos',1);r.onupgradeneeded=()=>r.result.createObjectStore('videos',{keyPath:'key'});r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+async function transact(mode,fn){const db=await openDB();try{return await new Promise((resolve,reject)=>{const tx=db.transaction('videos',mode),s=tx.objectStore('videos');let value;try{value=fn(s)}catch(e){tx.abort();reject(e);return}tx.oncomplete=()=>resolve(value);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Não foi possível salvar o vídeo.'));})}finally{db.close()}}
+async function read(id){const scope=account();const db=await openDB();try{return await new Promise((resolve,reject)=>{const r=db.transaction('videos').objectStore('videos').get(scope+':'+id);r.onsuccess=()=>resolve(r.result?.blob);r.onerror=()=>reject(r.error)})}finally{db.close()}}
+function validate(entries){if(!entries.length)throw Error('Selecione um vídeo.');for(const e of entries){if(!(e.blob instanceof Blob)||!e.blob.size||e.blob.size>LIMIT)throw Error('Cada vídeo deve ter até 50 MB. Use Reduzir / dividir para arquivos maiores.');if(!/\.(mp4|webm)$/i.test(e.name))throw Error('Escolha um vídeo MP4 ou WebM.')}}
+async function attach(entries,c,store){validate(entries);const scope=account(),before=structuredClone(c.videos||[]);const rows=entries.map(e=>({id:crypto.randomUUID(),name:e.name,size:e.blob.size,type:e.blob.type||(/\.mp4$/i.test(e.name)?'video/mp4':'video/webm')}));await transact('readwrite',s=>entries.forEach((e,i)=>s.put({key:scope+':'+rows[i].id,blob:e.blob})));try{if(account()!==scope)throw Error('A conta mudou durante o salvamento.');c.videos=[...before,...rows];store()}catch(e){c.videos=before;await transact('readwrite',s=>rows.forEach(r=>s.delete(scope+':'+r.id)));throw e}}
+function panel(c){return '<section class="panel"><h2>Vídeos da instrução</h2><p>Vídeos salvos neste navegador e nesta conta. Baixe os arquivos para guardar uma cópia; o backup JSON contém os vínculos, sem os vídeos.</p><label>Adicionar vídeo MP4/WebM (até 50 MB)<input id="it-video-file" type="file" accept=".mp4,.webm"></label><div class="actions"><button id="it-video-add">Salvar vídeo nesta IT</button><button id="it-video-editor">✂ Reduzir / dividir vídeo grande</button></div><p id="it-video-status" role="status"></p>'+(c.videos||[]).map((v,i)=>'<div class="actions"><strong>'+esc(v.name)+'</strong><span>'+(v.size/1024/1024).toFixed(1)+' MB</span><button data-it-video-play="'+i+'">Assistir</button><button data-it-video-download="'+i+'">Baixar vídeo</button><button data-it-video-delete="'+i+'" class="danger">Excluir vídeo</button></div>').join('')+'</section>'}
+async function show(v,downloadOnly=false){const blob=await read(v.id);if(!blob)throw Error('Vídeo não encontrado neste navegador. Se restaurou o JSON ou mudou de dispositivo, adicione o arquivo novamente.');const url=URL.createObjectURL(blob);if(downloadOnly){const a=el('a');a.href=url;a.download=v.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);return}const d=el('dialog'),player=el('video');player.controls=true;player.src=url;player.style.width='100%';d.append(el('h3',v.name),player,button('Fechar',()=>d.close()));document.body.append(d);d.showModal();d.onclose=()=>{player.pause();URL.revokeObjectURL(url);d.remove()}}
+function bind(get,store){const run=fn=>async()=>{try{await fn()}catch(e){document.querySelector('#it-video-status').textContent=e.message}};document.querySelector('#it-video-add').onclick=run(async()=>{const f=document.querySelector('#it-video-file').files[0];if(!f)throw Error('Selecione um vídeo.');await attach([{blob:f,name:f.name}],get(),store);render()});document.querySelector('#it-video-editor').onclick=run(()=>{const c=get();videoEditor(c,async entries=>{await attach(entries,c,store);render()})});for(const [attr,fn] of [['play',v=>show(v)],['download',v=>show(v,true)],['delete',async(v,c)=>{if(!confirm('Excluir este vídeo da IT?'))return;const before=c.videos;c.videos=c.videos.filter(x=>x.id!==v.id);try{store()}catch(e){c.videos=before;throw e}await transact('readwrite',s=>s.delete(account()+':'+v.id));render()}]])document.querySelectorAll('[data-it-video-'+attr+']').forEach(n=>n.onclick=run(()=>{const c=get();return fn(c.videos[Number(n.getAttribute('data-it-video-'+attr))],c)}))}
+function videoEditor(doc,afterUpload){
+const dialog=el('dialog',null,'it-viewer-dialog'),form=el('div',null,'admin-form'),message=el('p'),output=el('div');message.setAttribute('role','status');
+const heading=el('div',null,'it-viewer-header');heading.append(el('h3','✂ Preparar vídeo para a IT'),button('Fechar',()=>{if(busy&&!cancelProcessing){message.textContent='Aguarde o envio das partes terminar antes de fechar.';return;}dialog.close();}));dialog.append(heading,el('p','Escolha um vídeo grande, defina o trecho e gere partes menores que 50 MB. O processamento ocorre no seu computador e leva aproximadamente o tempo do trecho. Mantenha esta aba aberta e visível.','notice'),form);
+const sourceLabel=el('label','Vídeo original (pode ter mais de 50 MB)'),source=el('input');source.type='file';source.accept='video/*';sourceLabel.append(source);form.append(sourceLabel);
+const preview=el('video');preview.controls=true;preview.playsInline=true;preview.preload='metadata';preview.style.width='100%';form.append(preview);
+const start=field(form,'Início do trecho (segundos)','start','number'),end=field(form,'Fim do trecho (segundos)','end','number');start.min='0';start.step=end.step='0.1';end.min='0';start.value='0';
+form.append(button('Definir início na posição atual',()=>{start.value=preview.currentTime.toFixed(1);}),button('Definir fim na posição atual',()=>{end.value=preview.currentTime.toFixed(1);}));
+const quality=field(form,'Qualidade / resolução','quality','text',['720p — qualidade padrão','480p — arquivo menor','360p — mais compacto']);
+const limit=field(form,'Tamanho máximo por parte (MB, até 48)','limit','number');limit.min='5';limit.max='48';limit.value='45';
+let sourceUrl=null,parts=[],partUrls=[],busy=false,closed=false,cancelProcessing=null;
+const generate=button('✂ Gerar partes',process),cancel=button('Cancelar processamento',()=>cancelProcessing?.());cancel.hidden=true;form.append(generate,cancel);
+const upload=button('Salvar partes nesta IT',uploadParts);upload.disabled=true;dialog.append(message,output,upload);document.body.append(dialog);dialog.showModal();
+function clearParts(){partUrls.forEach(u=>URL.revokeObjectURL(u));partUrls=[];parts=[];output.replaceChildren();upload.disabled=true;}
+source.onchange=()=>{if(busy)return;clearParts();if(sourceUrl)URL.revokeObjectURL(sourceUrl);const file=source.files[0];if(!file)return;sourceUrl=URL.createObjectURL(file);preview.src=sourceUrl;message.textContent=`Original: ${(file.size/1024/1024).toFixed(1)} MB. Escolha o trecho e a qualidade.`;};
+preview.onloadedmetadata=()=>{if(Number.isFinite(preview.duration)){start.value='0';end.value=preview.duration.toFixed(1);}else message.textContent='Não foi possível determinar a duração. Escolha outro vídeo.';};
+function setBusy(value){busy=value;source.disabled=generate.disabled=quality.disabled=start.disabled=end.disabled=limit.disabled=value;cancel.hidden=!value;upload.disabled=value||!parts.length;}
+function displayParts(){output.replaceChildren();parts.forEach((p,i)=>{const row=el('div',null,'document-row');row.append(el('strong',`Parte ${i+1} · ${(p.blob.size/1024/1024).toFixed(1)} MB · ${p.start.toFixed(1)}–${p.end.toFixed(1)} s`));const url=URL.createObjectURL(p.blob);partUrls.push(url);row.append(button('▶ Conferir',()=>{const player=el('video');player.controls=true;player.src=url;player.style.width='100%';row.append(player);player.play().catch(()=>{});}),button('↓ Baixar parte',()=>{const a=el('a');a.href=url;a.download=`video-parte-${String(i+1).padStart(2,'0')}.${p.ext}`;document.body.append(a);a.click();a.remove();}));output.append(row);});}
+async function process(){
+if(!sourceUrl||!source.files[0]){message.textContent='Escolha um vídeo primeiro.';return;}
+const a=Number(start.value),b=Number(end.value),max=Number(limit.value);if(!Number.isFinite(a)||!Number.isFinite(b)||a<0||b<=a||b>preview.duration+.15||max<5||max>48){message.textContent='Confira o início, o fim e o limite entre 5 e 48 MB.';return;}
+if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){message.textContent='Este navegador não suporta o editor. Use Chrome ou Edge atualizado no computador.';return;}
+const mime=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/webm;codecs=vp8,opus','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));if(!mime){message.textContent='Não há formato compatível para gerar o vídeo neste navegador.';return;}
+clearParts();setBusy(true);preview.pause();const result=[];
+const settings=quality.value.startsWith('720')?{height:720,bitrate:1500000}:quality.value.startsWith('480')?{height:480,bitrate:800000}:{height:360,bitrate:500000};
+try{
+await transcode(a,b,settings,mime,max,result);if(closed)return;parts=result;displayParts();message.textContent=`${parts.length} parte(s) prontas. Confira o vídeo e o áudio antes de enviar.`;
+}catch(e){if(!closed){clearParts();message.textContent=e.message||'Não foi possível preparar o vídeo.';}}
+finally{cancelProcessing=null;if(!closed)setBusy(false);}
+}
+async function transcode(a,b,settings,mime,max,result){
+const video=el('video');video.playsInline=true;video.preload='auto';video.src=sourceUrl;video.style.width='1px';video.style.height='1px';video.style.position='absolute';video.style.opacity='0';dialog.append(video);
+let audio=null,stream=null,raf=null,recorder=null,cancelled=false,resolveFinished,rejectFinished,cutting=false,partStart=a,lastTime=a;
+const finished=new Promise((resolve,reject)=>{resolveFinished=resolve;rejectFinished=reject;});finished.catch(()=>{});
+const stop=()=>{video.pause();if(recorder&&recorder.state!=='inactive')recorder.stop();};
+cancelProcessing=()=>{cancelled=true;stop();rejectFinished(Error('Processamento cancelado. Nenhuma parte foi enviada.'));};
+const visibility=()=>{if(document.hidden)cancelProcessing?.();};document.addEventListener('visibilitychange',visibility);
+try{
+await Promise.race([new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=()=>reject(Error('O navegador não conseguiu abrir este vídeo. Converta o original para MP4 e tente novamente.'));video.load();}),finished]);if(cancelled)throw Error('Processamento cancelado.');video.onerror=()=>rejectFinished(Error('Falha ao reproduzir o vídeo original.'));
+const AudioClass=window.AudioContext||window.webkitAudioContext;if(!AudioClass)throw Error('Este navegador não suporta o processamento de áudio. Use Chrome ou Edge no computador.');
+audio=new AudioClass();await audio.resume();const input=audio.createMediaElementSource(video),destination=audio.createMediaStreamDestination(),silence=audio.createGain();silence.gain.value=0;input.connect(destination);input.connect(silence);silence.connect(audio.destination);
+const canvas=el('canvas');const height=Math.min(settings.height,video.videoHeight),ratio=video.videoWidth/video.videoHeight;if(!height||!Number.isFinite(ratio))throw Error('Dimensões do vídeo inválidas.');canvas.height=Math.max(2,Math.round(height/2)*2);canvas.width=Math.max(2,Math.round(canvas.height*ratio/2)*2);const ctx=canvas.getContext('2d');stream=canvas.captureStream(25);destination.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
+if(a>0){await new Promise(resolve=>{video.onseeked=()=>{video.onseeked=null;resolve();};video.currentTime=a;});}
+const hardLimit=50*1024*1024,target=(max-2)*1024*1024;
+function begin(){let chunks=[],bytes=0;cutting=false;partStart=video.currentTime;
+recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:settings.bitrate,audioBitsPerSecond:64000});
+recorder.ondataavailable=e=>{if(e.data.size){chunks.push(e.data);bytes+=e.data.size;}if(bytes>=target&&!cutting&&recorder.state==='recording'){cutting=true;stop();}};
+recorder.onerror=e=>rejectFinished(Error('Falha na conversão: '+(e.error?.message||'tente outra qualidade.')));
+recorder.onstop=()=>{if(cancelled)return;const blob=new Blob(chunks,{type:mime});if(blob.size>max*1024*1024||blob.size>hardLimit){cancelled=true;rejectFinished(Error('Uma parte ultrapassou o limite. Reduza a qualidade e gere novamente. Nenhuma parte foi enviada.'));return;}const partEnd=Math.min(video.currentTime,b);if(blob.size)result.push({blob,ext:mime.startsWith('video/mp4')?'mp4':'webm',start:partStart,end:partEnd,uploaded:false});if(partEnd>=b-.08||video.ended){resolveFinished();return;}begin();video.play().catch(rejectFinished);};recorder.start(500);
+}
+function frame(){if(cancelled)return;ctx.drawImage(video,0,0,canvas.width,canvas.height);lastTime=video.currentTime;message.textContent=`Preparando: ${Math.min(100,Math.round((lastTime-a)/(b-a)*100))}% · ${result.length} parte(s) concluídas`;if(lastTime>=b||video.ended){if(!cutting){cutting=true;stop();}return;}raf=requestAnimationFrame(frame);}
+ctx.drawImage(video,0,0,canvas.width,canvas.height);begin();video.onended=()=>{if(!cutting){cutting=true;stop();}};await video.play();raf=requestAnimationFrame(frame);await finished;
+}finally{cancelled=true;cancelAnimationFrame(raf);video.pause();if(recorder?.state==='recording')recorder.stop();stream?.getTracks().forEach(t=>t.stop());await audio?.close();video.removeAttribute('src');video.load();video.remove();document.removeEventListener('visibilitychange',visibility);}
+}
+async function uploadParts(){if(busy||!parts.length)return;setBusy(true);cancel.hidden=true;try{await afterUpload(parts.filter(p=>!p.uploaded).map((p,i)=>({blob:p.blob,name:'Vídeo — Parte '+String(i+1).padStart(2,'0')+'.'+p.ext})));parts.forEach(p=>p.uploaded=true);message.textContent='Partes salvas e vinculadas à IT neste navegador.';}catch(e){message.textContent=e.message;}finally{if(!closed){setBusy(false);upload.disabled=parts.every(p=>p.uploaded);}}}
+;
+dialog.addEventListener('cancel',e=>{if(busy&&!cancelProcessing)e.preventDefault();});
+dialog.onclose=()=>{if(busy&&cancelProcessing)cancelProcessing();closed=true;preview.pause();if(sourceUrl)URL.revokeObjectURL(sourceUrl);partUrls.forEach(u=>URL.revokeObjectURL(u));dialog.remove();};
+}
+
+
+return {panel,bind,validate};
+})();

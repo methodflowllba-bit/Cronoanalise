@@ -26,3 +26,5 @@
 
 /* Formulário de acesso amplo e responsivo */
 .auth-page{width:100%;max-width:none;box-sizing:border-box;grid-template-columns:minmax(0,1fr);justify-items:center}.auth-card{box-sizing:border-box;width:min(100%,640px);min-width:0;padding:40px 48px}.auth-card h1{text-align:center}.auth-card input{width:100%;box-sizing:border-box}@media(max-width:600px){.auth-page{padding:20px 14px}.auth-card{padding:28px 22px}.auth-card h1{font-size:23px}}
+
+.it-viewer-dialog{width:min(900px,92vw);max-height:90vh;overflow:auto;border:1px solid #ccd8e7;border-radius:12px;padding:24px}.it-viewer-dialog::backdrop{background:#172d4680}.it-viewer-header{display:flex;align-items:center;justify-content:space-between}.it-viewer-dialog video{max-height:45vh}.it-viewer-dialog label{display:block;margin:12px 0}.it-viewer-dialog input,.it-viewer-dialog select{display:block;max-width:100%}.it-viewer-dialog .document-row{padding:12px;border-bottom:1px solid #ddd}
