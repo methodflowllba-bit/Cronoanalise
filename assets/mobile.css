@@ -32,7 +32,8 @@
   .actions>button{flex:1 1 140px}
   .auth-account{font-size:13px}
   .chrono-side{min-width:0;gap:14px}
-  .chrono-side .timer-panel{order:-1}
+  .chrono-side .camera-panel{order:0}
+  .chrono-side .timer-panel{order:1}
   .timer{font-size:42px!important}
   .camera-panel video{max-height:40dvh!important}
   .camera-panel .actions{display:grid;grid-template-columns:1fr 1fr}
