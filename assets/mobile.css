@@ -69,3 +69,7 @@
 }
 @media(prefers-reduced-motion:reduce){.app .sidebar{transition:none}}
 @media print{.mobile-topbar,.mobile-menu-close,.mobile-menu-backdrop{display:none!important}}
+
+.yam-scroll-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;padding:8px;background:#e8f2fc;border-radius:8px}.yam-scroll-controls[hidden]{display:none}.yam-scroll-controls span{flex-basis:100%;font-size:13px;color:#325573}.yam-scroll-controls input[type=range]{flex:1;width:auto!important;min-width:60px!important;min-height:44px;accent-color:#086ac4}.yam-scroll-controls button{min-width:44px;min-height:44px}.yam-scroll-controls+.table-wrap{scrollbar-width:auto;scrollbar-color:#086ac4 #e8f2fc}.yam-scroll-controls+.table-wrap::-webkit-scrollbar{height:12px}.yam-scroll-controls+.table-wrap::-webkit-scrollbar-thumb{background:#086ac4;border-radius:8px}@media print{.yam-scroll-controls{display:none!important}}
+
+@media screen and (max-width:900px){main .yam-chart{width:850px!important;min-width:850px!important;max-width:none!important;touch-action:pan-x pan-y}.yam-chart-navigation{display:flex!important}.yam-chart-navigation button{flex:1;min-height:48px;background:#086ac4;color:#fff;border:0;border-radius:7px}.yam-chart-navigation+.table-wrap{overflow-x:scroll!important;max-width:100%;-webkit-overflow-scrolling:touch}}
