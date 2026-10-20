@@ -13,14 +13,34 @@ const FacePrivacy = (() => {
       } catch (error) { loading = null; throw Error('Não foi possível carregar a proteção de rostos. Confira a conexão e tente novamente.'); }
     })();
   }
+  // Reutiliza buffers para não criar canvases a cada rosto/quadro.
+  const tiny=document.createElement('canvas'), soft=document.createElement('canvas');
   function cloud(ctx, box) {
-    const x = box.originX + box.width / 2, y = box.originY + box.height / 2;
-    const rx = box.width * .9, ry = box.height * 1.05;
-    ctx.fillStyle = '#e2e8f0';
-    ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-    for (const [dx,dy] of [[-.55,0],[.55,0],[-.25,-.55],[.25,-.55],[0,.55]]) {
-      ctx.beginPath(); ctx.ellipse(x+dx*rx,y+dy*ry,rx*.6,ry*.6,0,0,Math.PI*2); ctx.fill();
-    }
+    const rx=box.width*.85,ry=box.height*1.0;
+    const x=box.originX+box.width/2,y=box.originY+box.height/2;
+    const left=Math.max(0,Math.floor(x-rx)),top=Math.max(0,Math.floor(y-ry));
+    const width=Math.min(ctx.canvas.width-left,Math.ceil(rx*2));
+    const height=Math.min(ctx.canvas.height-top,Math.ceil(ry*2));
+    if(width<=0||height<=0)return;
+    tiny.width=6;tiny.height=6;
+    const small=tiny.getContext('2d');
+    small.drawImage(ctx.canvas,left,top,width,height,0,0,6,6);
+    soft.width=width;soft.height=height;
+    const out=soft.getContext('2d');
+    out.imageSmoothingEnabled=true;out.imageSmoothingQuality='high';
+    // A redução forte remove detalhes antes do acabamento desfocado.
+    out.filter='blur('+Math.max(12,Math.round(box.width*.15))+'px)';
+    out.drawImage(tiny,-width*.25,-height*.25,width*1.5,height*1.5);
+    out.filter='none';
+    out.globalCompositeOperation='destination-in';
+    out.save();out.translate(x-left,y-top);out.scale(rx,ry);
+    const fade=out.createRadialGradient(0,0,0,0,0,1);
+    fade.addColorStop(0,'rgba(0,0,0,1)');
+    fade.addColorStop(.72,'rgba(0,0,0,1)');
+    fade.addColorStop(1,'rgba(0,0,0,0)');
+    out.fillStyle=fade;out.fillRect(-1,-1,2,2);out.restore();
+    out.globalCompositeOperation='source-over';
+    ctx.drawImage(soft,left,top);
   }
   async function create(raw) {
     const model = await detector();
