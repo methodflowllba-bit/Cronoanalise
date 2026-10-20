@@ -38,3 +38,5 @@
 .it-step-videos:empty{display:none}.it-step-videos{padding:12px;margin-top:12px;background:#e8f2fc;border-radius:8px}.it-step-videos strong{overflow-wrap:anywhere}
 
 .shared-bottom{margin-top:32px;padding-top:16px;border-top:1px solid #d5dfec}.shared-bottom .auth-account{flex-wrap:wrap;justify-content:flex-start;gap:12px;margin-bottom:12px}.shared-bottom #shared-status{flex:1 1 220px}.shared-bottom button{min-height:44px}@media(max-width:900px){.shared-bottom .auth-account{display:grid;grid-template-columns:minmax(0,1fr)}.shared-bottom button{width:100%}}@media print{.shared-bottom{display:none!important}}
+
+.it-preview-video{display:block;margin:10px 0;padding:8px 12px;background:#e8f2fc;border:1px solid #b7d5f0;border-radius:6px;color:#086ac4;text-align:left;max-width:100%;font-size:12px;overflow-wrap:anywhere;cursor:pointer}#it-print-config{font-weight:700;min-height:44px}
