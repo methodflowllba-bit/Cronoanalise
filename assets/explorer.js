@@ -14,7 +14,7 @@ async function binary(id,value,remove=false){return Shared.blob('files',id,value
 function open(options={}){
 const folderPicking=typeof options.onPickFolder==='function',picking=folderPicking||typeof options.onPickStudy==='function'||typeof options.onPickEntry==='function';
 const formDrafts=['setup','record'].map(id=>{const form=document.getElementById(id);return form?{id,values:[...form.elements].filter(e=>e.name).map(e=>[e.name,e.value])}:null}).filter(Boolean);
-const scope=window.MFUserDataKey,dialog=node('dialog',undefined,'mf-explorer-dialog'),host=node('section',undefined,'windows-explorer');dialog.append(host);document.body.append(dialog);let current=folderPicking&&state().folders.some(f=>f.id===options.folder)?options.folder:null,selection=null,clipboard=null,details=false,search='';
+const scope=window.MFUserDataKey,dialog=node('dialog',undefined,'mf-explorer-dialog'),host=node('section',undefined,'windows-explorer');dialog.append(host);document.body.append(dialog);dialog.classList.add('explorer-fixed-layout');let current=folderPicking&&state().folders.some(f=>f.id===options.folder)?options.folder:null,selection=null,clipboard=null,details=false,search='';
 function valid(){if(scope!==window.MFUserDataKey||!Auth.allowed()){dialog.close();throw Error('A sessão mudou. Abra o explorador novamente.')}}
 const run=fn=>async()=>{try{valid();await fn()}catch(e){status.textContent=e.message}};
 let status=node('p');

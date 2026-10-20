@@ -73,3 +73,23 @@
 .yam-scroll-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;padding:8px;background:#e8f2fc;border-radius:8px}.yam-scroll-controls[hidden]{display:none}.yam-scroll-controls span{flex-basis:100%;font-size:13px;color:#325573}.yam-scroll-controls input[type=range]{flex:1;width:auto!important;min-width:60px!important;min-height:44px;accent-color:#086ac4}.yam-scroll-controls button{min-width:44px;min-height:44px}.yam-scroll-controls+.table-wrap{scrollbar-width:auto;scrollbar-color:#086ac4 #e8f2fc}.yam-scroll-controls+.table-wrap::-webkit-scrollbar{height:12px}.yam-scroll-controls+.table-wrap::-webkit-scrollbar-thumb{background:#086ac4;border-radius:8px}@media print{.yam-scroll-controls{display:none!important}}
 
 @media screen and (max-width:900px){main .yam-chart{width:850px!important;min-width:850px!important;max-width:none!important;touch-action:pan-x pan-y}.yam-chart-navigation{display:flex!important}.yam-chart-navigation button{flex:1;min-height:48px;background:#086ac4;color:#fff;border:0;border-radius:7px}.yam-chart-navigation+.table-wrap{overflow-x:scroll!important;max-width:100%;-webkit-overflow-scrolling:touch}}
+
+/* Uma única rolagem na lista; altura conforme os itens, limitada pela tela. */
+.mf-explorer-dialog{overflow:hidden!important;max-height:94vh;max-height:94dvh}
+.mf-explorer-dialog .windows-explorer{display:flex;flex-direction:column;max-height:94vh;max-height:94dvh;margin:0;box-sizing:border-box}
+.mf-explorer-dialog .windows-explorer>div:not(.explorer-workspace),.mf-explorer-dialog .windows-explorer>p{flex-shrink:0}
+.mf-explorer-dialog .explorer-workspace{flex:0 1 auto;min-height:100px;max-height:none;overflow:hidden}
+.mf-explorer-dialog .explorer-pane,.mf-explorer-dialog .explorer-tree{min-height:0;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:auto;scrollbar-color:#647f98 #eef3f8;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch}
+.mf-explorer-dialog .explorer-pane::-webkit-scrollbar,.mf-explorer-dialog .explorer-tree::-webkit-scrollbar{width:14px}
+.mf-explorer-dialog .explorer-pane::-webkit-scrollbar-thumb,.mf-explorer-dialog .explorer-tree::-webkit-scrollbar-thumb{background:#647f98;border:3px solid #eef3f8;border-radius:8px}
+@media(max-width:900px){.mf-explorer-dialog .windows-explorer{max-height:calc(100dvh - 12px)}.mf-explorer-dialog .explorer-workspace{min-height:80px;max-height:none}.mf-explorer-dialog .explorer-titlebar,.mf-explorer-dialog .explorer-count{padding:8px}.mf-explorer-dialog .explorer-status{max-height:14dvh;overflow:auto}.mf-explorer-dialog .explorer-breadcrumbs{max-height:12dvh;overflow:auto}}
+
+/* Altura definida no contêiner: somente a árvore e a lista podem rolar. */
+dialog.mf-explorer-dialog.explorer-fixed-layout{position:fixed!important;inset:0!important;margin:auto!important;padding:0!important;height:94vh!important;height:94dvh!important;max-height:94dvh!important;overflow:hidden!important;box-sizing:border-box!important}
+dialog.explorer-fixed-layout>.windows-explorer{height:100%!important;max-height:100%!important;min-height:0!important;display:flex!important;flex-direction:column!important;margin:0!important;overflow:hidden!important}
+dialog.explorer-fixed-layout .explorer-workspace{flex:1 1 0px!important;height:0!important;min-height:0!important;max-height:none!important;grid-template-rows:minmax(0,1fr)!important;overflow:hidden!important}
+dialog.explorer-fixed-layout .explorer-pane,dialog.explorer-fixed-layout .explorer-tree{height:100%!important;max-height:100%!important;min-height:0!important;box-sizing:border-box!important;overflow-y:scroll!important;overflow-x:auto!important;padding-bottom:28px!important}
+dialog.explorer-fixed-layout .explorer-items{align-content:start!important;min-height:0!important;height:auto!important}
+dialog.explorer-fixed-layout .explorer-status{max-height:12dvh!important;overflow-y:auto!important;flex-shrink:0!important}
+dialog.explorer-fixed-layout .explorer-titlebar,dialog.explorer-fixed-layout .explorer-toolbar,dialog.explorer-fixed-layout .explorer-addressbar,dialog.explorer-fixed-layout .explorer-count,dialog.explorer-fixed-layout .explorer-folder-confirm{flex:0 0 auto!important}
+@media(max-width:900px){dialog.mf-explorer-dialog.explorer-fixed-layout{height:calc(100dvh - 12px)!important;max-height:calc(100dvh - 12px)!important}dialog.explorer-fixed-layout .explorer-toolbar{flex-wrap:nowrap!important;overflow-x:auto!important}}
