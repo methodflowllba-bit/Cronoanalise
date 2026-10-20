@@ -55,6 +55,7 @@ const Mobile = (() => {
       }
     });
     document.querySelectorAll('main .table-wrap').forEach((area, index) => {
+      if (area.previousElementSibling?.classList.contains('yam-chart-navigation')) return;
       area.tabIndex = 0;
       area.setAttribute('aria-label', 'Área com rolagem horizontal do Yamazumi');
       const bar = document.createElement('div'); bar.className = 'yam-scroll-controls';
@@ -65,7 +66,7 @@ const Mobile = (() => {
       bar.append(label, left, range, right); area.before(bar);
       const update = () => {
         const max = Math.max(0, area.scrollWidth - area.clientWidth);
-        bar.hidden = max < 2; range.max = String(max); range.value = String(area.scrollLeft);
+        bar.hidden = max < 2 && !window.matchMedia('(max-width:900px)').matches; range.max = String(max); range.value = String(area.scrollLeft);
         left.disabled = area.scrollLeft <= 1; right.disabled = area.scrollLeft >= max - 1;
       };
       left.onclick = () => area.scrollBy({left:-area.clientWidth * .7,behavior:'smooth'});
